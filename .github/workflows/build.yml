@@ -24,8 +24,12 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew :module:assembleRelease
 
+      # NEW STEP: Find exactly where the zip is
+      - name: List files to find the ZIP
+        run: find module/build -type f
+
       - name: Upload Module ZIP
         uses: actions/upload-artifact@v4
         with:
           name: Talabat-Bypass-Module
-          path: module/build/**/*.zip
+          path: module/build/outputs/
