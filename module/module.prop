@@ -1,0 +1,6 @@
+id=talabat_bypass
+name=Talabat Bypass Module
+version=v1.0
+versionCode=1
+author=YourName
+description=Bypasses Talabat root and mock location detection for riders.
