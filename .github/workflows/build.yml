@@ -28,4 +28,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Talabat-Bypass-Module
-          path: module/build/outputs/module/*.zip
+          path: module/release/*.zip
