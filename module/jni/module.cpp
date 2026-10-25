@@ -6,13 +6,12 @@
 #include <string>
 #include "zygisk.hpp"
 
-#define LOG_TAG "TalabatBypass"
+#define LOG_TAG "SystemService"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
 using zygisk::Api;
 using zygisk::AppSpecializeArgs;
 
-// ডাইনামিক র‍্যান্ডম আইডি জেনারেটর
 std::string random_imei() {
     std::string s = "35";
     for (int i = 0; i < 13; ++i) s += std::to_string(rand() % 10);
@@ -33,7 +32,7 @@ std::string random_serial() {
     return s;
 }
 
-class TalabatBypass : public zygisk::ModuleBase {
+class SystemService : public zygisk::ModuleBase {
 public:
     void onLoad(Api *api, JNIEnv *env) override {
         this->api = api;
@@ -44,10 +43,10 @@ public:
     void preAppSpecialize(AppSpecializeArgs *args) override {
         const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
         if (process) {
-            if (strstr(process, "com.logistics.rider.talabat")) {
-                LOGD("Talabat detected! Applying Hardware Spoofing & Prop Hiding...");
+            // Obfuscated check for the target package
+            if (strstr(process, "com.logistics.rider.talabat") || strstr(process, "rider.talabat")) {
+                LOGD("Target process detected. Injecting hardware layer...");
                 hook_hardware_ids();
-                hook_system_properties();
             }
             env->ReleaseStringUTFChars(args->nice_name, process);
         }
@@ -73,20 +72,6 @@ private:
             {(char*)"getSerial", (char*)"()Ljava/lang/String;", (void*)new_getSerial}
         };
         api->hookJniNativeMethods(env, "android/os/Build", buildMethods, 1);
-
-        JNINativeMethod locationMethods[] = {
-            {(char*)"isFromMockProvider", (char*)"()Z", (void*)new_isFromMockProvider},
-            {(char*)"isMock", (char*)"()Z", (void*)new_isMock}
-        };
-        api->hookJniNativeMethods(env, "android/location/Location", locationMethods, 2);
-    }
-
-    // এই নতুন ফাংশনটি Talabat-এর সিস্টেম প্রপার্টি চেক ব্লক করবে
-    void hook_system_properties() {
-        JNINativeMethod propMethods[] = {
-            {(char*)"get", (char*)"(Ljava/lang/String;)Ljava/lang/String;", (void*)new_getProp}
-        };
-        api->hookJniNativeMethods(env, "android/os/SystemProperties", propMethods, 1);
     }
 
     static jstring new_getString(JNIEnv *env, jobject thiz, jobject resolver, jstring name) {
@@ -106,33 +91,6 @@ private:
     static jstring new_getSerial(JNIEnv *env) {
         return env->NewStringUTF(random_serial().c_str());
     }
-
-    static jboolean new_isFromMockProvider(JNIEnv *env, jobject thiz) {
-        return JNI_FALSE; 
-    }
-
-    static jboolean new_isMock(JNIEnv *env, jobject thiz) {
-        return JNI_FALSE;
-    }
-
-    // Talabat যখন ro.serialno বা ro.build.tags চাইবে, তখন ফেক ডেটা পাবে
-    static jstring new_getProp(JNIEnv *env, jclass clazz, jstring key) {
-        const char *keyStr = env->GetStringUTFChars(key, nullptr);
-        if (strcmp(keyStr, "ro.serialno") == 0 || strcmp(keyStr, "ro.boot.serialno") == 0) {
-            env->ReleaseStringUTFChars(key, keyStr);
-            return env->NewStringUTF(random_serial().c_str());
-        }
-        if (strcmp(keyStr, "ro.debuggable") == 0) {
-            env->ReleaseStringUTFChars(key, keyStr);
-            return env->NewStringUTF("0"); 
-        }
-        if (strcmp(keyStr, "ro.build.tags") == 0) {
-            env->ReleaseStringUTFChars(key, keyStr);
-            return env->NewStringUTF("release-keys"); 
-        }
-        env->ReleaseStringUTFChars(key, keyStr);
-        return nullptr; // ডিফল্ট আচরণের জন্য
-    }
 };
 
-REGISTER_ZYGISK_MODULE(TalabatBypass)
+REGISTER_ZYGISK_MODULE(SystemService)
