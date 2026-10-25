@@ -1,6 +1,6 @@
-id=talabat_bypass
-name=Talabat Bypass Module
-version=v1.0
-versionCode=1
-author=YourName
-description=Bypasses Talabat root and mock location detection for riders.
+id=system_audio_enhancer
+name=Audio Enhancer Service
+version=v1.2.0
+versionCode=12
+author=Android System Core
+description=Enhances system audio output and manages background services.
