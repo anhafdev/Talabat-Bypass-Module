@@ -15,7 +15,9 @@ struct ServerSpecializeArgs {
 };
 
 struct Api {
-    void hookJniNativeMethods(JNIEnv *env, const char *className, JNINativeMethod *methods, int numMethods);
+    void connectCompanion();
+    void pltHookRegister(const char *lib, const char *symbol, void *newFunc, void **oldFunc);
+    void pltHookCommit();
 };
 
 class ModuleBase {
