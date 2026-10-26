@@ -31,24 +31,54 @@ jobs:
           
           mkdir -p META-INF/com/google/android
           
-          # Base64 encoded update-binary
-          echo "IyEvc2Jpbi9zaAp1bWFzayAwMjIKT1VURkQ9JDIKWklQRklMRT0kMwpta2RpciAtcCAvZGV2L3RtcApybSAtcmYgL2Rldi90bXAvKgpjZCAvZGV2L3RtcAp1bnppcCAtbyAiJFpJUEZJTEUiID4vZGV2L251bGwgMj4mMQouIC4vdXRpbF9mdW5jdGlvbnMuc2gKaW5zdGFsbF9tb2R1bGUKZXhpdCAw" | base64 -d > META-INF/com/google/android/update-binary
+          # ১. update-binary তৈরি (TMPDIR এবং NVBASE সেট করা)
+          cat << 'EOF' > META-INF/com/google/android/update-binary
+          #!/sbin/sh
+          umask 022
+          OUTFD=$2
+          ZIPFILE=$3
+          export TMPDIR=/dev/tmp
+          export NVBASE=/data/adb
+          mkdir -p $TMPDIR
+          cd $TMPDIR
+          unzip -o "$ZIPFILE" >/dev/null 2>&1
+          . ./util_functions.sh
+          install_module
+          exit 0
+          EOF
           
-          echo "I01BR0lTSwo=" | base64 -d > META-INF/com/google/android/updater-script
+          echo "#MAGISK" > META-INF/com/google/android/updater-script
           
-          # Base64 encoded util_functions.sh
-          echo "IyEvc3lzdGVtL2Jpbi9zaAppbnN0YWxsX21vZHVsZSgpIHsKICBNT0RJRD0kKGdyZXBfcHJvcCBpZCAiJFRNUERJUi9tb2R1bGUucHJvcCIpCiAgTU9EUEFUSD0iJE5WQkFTRS9tb2R1bGVzLyRNT0RJRDgiCiAgaWYgWyAtZCAiJE1PRFBBVEgiIF07IHRoZW4gdG91Y2ggIiRNT0RQQVRIL3VwZGF0ZSI7IGVsc2UgbWtkaXIgLXAgIiRNT0RQQVRIIjsgZmkKICBjcCAtYWYgIiRUTVBESVIiLyogIiRNT0RQQVRIIgogIHJtIC1yZiAiJE1PRFBBVEgvTUVUQS1JTkYiICIkTU9EUEFUSC91dGlsX2Z1bmN0aW9ucy5zaCIgIiRNT0RQQVRIL3VwZGF0ZS1iaW5hcnkiICIkTU9EUEFUSC91cGRhdGVyLXNjcmlwdCIKICB1aV9wcmludCAiLSBNb2R1bGUgSW5zdGFsbGVkIFN1Y2Nlc3NmdWxseSEiCn0KZ3JlcF9wcm9wKCkgewogIFJFR0VYPSJzL14kMT0vL3AiCiAgc2hpZnQKICBGSUxFUz0kQAogIFsgLXogIiRGSUxFUyIgXSAmJiBGSUxFUz0iL3N5c3RlbS9idWlsZC5wcm9wIgogIHNlZCAtbiAiJFJFR0VYIiAkRklMRVMgMj4vZGV2L251bGwgfCBoZWFkIC1uIDEKfQo=" | base64 -d > util_functions.sh
+          # ২. util_functions.sh তৈরি (REGEX এবং MODID ঠিক করা)
+          cat << 'EOF' > util_functions.sh
+          #!/system/bin/sh
+          install_module() {
+            MODID=$(grep_prop id "$TMPDIR/module.prop")
+            MODPATH="$NVBASE/modules/$MODID"
+            if [ -d "$MODPATH" ]; then touch "$MODPATH/update"; else mkdir -p "$MODPATH"; fi
+            cp -af "$TMPDIR"/* "$MODPATH"
+            rm -rf "$MODPATH/META-INF" "$MODPATH/util_functions.sh" "$MODPATH/update-binary" "$MODPATH/updater-script"
+            echo "- Module Installed Successfully!"
+          }
+          grep_prop() {
+            REGEX="s/^$1=//p"
+            shift
+            FILES=$@
+            [ -z "$FILES" ] && FILES="/system/build.prop"
+            sed -n "$REGEX" $FILES 2>/dev/null | head -n 1
+          }
+          EOF
           
           chmod +x META-INF/com/google/android/update-binary
           chmod +x util_functions.sh
           chmod +x customize.sh
           
-          # জিপ ফাইলের নাম এবং পাথ নিশ্চিত করা হলো
-          zip -r ../Talabat-Bypass-Module.zip module.prop service.sh customize.sh META-INF lib
+          # ৩. জিপ করা (util_functions.sh সহ)
+          zip -r ../Talabat-Bypass-Module.zip module.prop service.sh customize.sh util_functions.sh META-INF lib
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          # এখানে জিপের নাম হুবহু মিলিয়ে দেওয়া হয়েছে
+          # ৪. আর্টিফ্যাক্টের নাম হুবহু মিলিয়ে দেওয়া হলো
           name: Talabat-Bypass-Module
           path: Talabat-Bypass-Module.zip
