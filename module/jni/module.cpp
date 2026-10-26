@@ -56,26 +56,38 @@ private:
     JNIEnv *env;
 
     void hook_hardware_ids() {
-        JNINativeMethod secureMethods[] = {
-            {(char*)"getString", (char*)"(Landroid/content/ContentResolver;Ljava/lang/String;)Ljava/lang/String;", (void*)new_getString}
-        };
-        api->hookJniNativeMethods(env, "android/provider/Settings$Secure", secureMethods, 1);
+        jclass secureClass = env->FindClass("android/provider/Settings$Secure");
+        if (secureClass) {
+            JNINativeMethod secureMethods[] = {
+                {(char*)"getString", (char*)"(Landroid/content/ContentResolver;Ljava/lang/String;)Ljava/lang/String;", (void*)new_getString}
+            };
+            env->RegisterNatives(secureClass, secureMethods, 1);
+        }
 
-        JNINativeMethod telephonyMethods[] = {
-            {(char*)"getImei", (char*)"()Ljava/lang/String;", (void*)new_getImei},
-            {(char*)"getDeviceId", (char*)"()Ljava/lang/String;", (void*)new_getImei}
-        };
-        api->hookJniNativeMethods(env, "android/telephony/TelephonyManager", telephonyMethods, 2);
+        jclass telephonyClass = env->FindClass("android/telephony/TelephonyManager");
+        if (telephonyClass) {
+            JNINativeMethod telephonyMethods[] = {
+                {(char*)"getImei", (char*)"()Ljava/lang/String;", (void*)new_getImei},
+                {(char*)"getDeviceId", (char*)"()Ljava/lang/String;", (void*)new_getImei}
+            };
+            env->RegisterNatives(telephonyClass, telephonyMethods, 2);
+        }
 
-        JNINativeMethod buildMethods[] = {
-            {(char*)"getSerial", (char*)"()Ljava/lang/String;", (void*)new_getSerial}
-        };
-        api->hookJniNativeMethods(env, "android/os/Build", buildMethods, 1);
+        jclass buildClass = env->FindClass("android/os/Build");
+        if (buildClass) {
+            JNINativeMethod buildMethods[] = {
+                {(char*)"getSerial", (char*)"()Ljava/lang/String;", (void*)new_getSerial}
+            };
+            env->RegisterNatives(buildClass, buildMethods, 1);
+        }
 
-        JNINativeMethod propMethods[] = {
-            {(char*)"get", (char*)"(Ljava/lang/String;)Ljava/lang/String;", (void*)new_getProp}
-        };
-        api->hookJniNativeMethods(env, "android/os/SystemProperties", propMethods, 1);
+        jclass propClass = env->FindClass("android/os/SystemProperties");
+        if (propClass) {
+            JNINativeMethod propMethods[] = {
+                {(char*)"get", (char*)"(Ljava/lang/String;)Ljava/lang/String;", (void*)new_getProp}
+            };
+            env->RegisterNatives(propClass, propMethods, 1);
+        }
     }
 
     static jstring new_getString(JNIEnv *env, jobject thiz, jobject resolver, jstring name) {
