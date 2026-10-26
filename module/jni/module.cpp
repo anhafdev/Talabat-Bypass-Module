@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
-#include <unistd.h>
 #include "zygisk.hpp"
 
 #define LOG_TAG "SystemService"
@@ -32,21 +31,6 @@ std::string random_serial() {
     return s;
 }
 
-// --- Anti-Crash Hooks (Prevent App from closing itself) ---
-static void (*orig_exit)(int status);
-static void new_exit(int status) {
-    LOGD("[+] Blocked exit() call! App tried to close.");
-}
-
-static int (*orig_kill)(pid_t pid, int sig);
-static int new_kill(pid_t pid, int sig) {
-    if (pid == getpid()) {
-        LOGD("[+] Blocked kill() call on self!");
-        return 0;
-    }
-    return orig_kill(pid, sig);
-}
-
 class SystemService : public zygisk::ModuleBase {
 public:
     void onLoad(Api *api, JNIEnv *env) override {
@@ -59,22 +43,11 @@ public:
         const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
         if (process) {
             if (strstr(process, "com.logistics.rider.talabat")) {
-                LOGD("Talabat detected. Injecting Hardware Layer & Anti-Crash...");
-                
-                // 1. Hook Java Hardware IDs
+                LOGD("Talabat detected. Injecting Hardware Layer...");
                 hook_hardware_ids();
-                
-                // 2. Register PLT Hooks for Native Kill/Exit
-                api->pltHookRegister("libc.so", "exit", (void*)new_exit, (void**)&orig_exit);
-                api->pltHookRegister("libc.so", "kill", (void*)new_kill, (void**)&orig_kill);
             }
             env->ReleaseStringUTFChars(args->nice_name, process);
         }
-    }
-
-    void postAppSpecialize(const AppSpecializeArgs *args) override {
-        // Commit native hooks
-        api->pltHookCommit();
     }
 
 private:
