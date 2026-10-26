@@ -31,7 +31,7 @@ jobs:
           
           mkdir -p META-INF/com/google/android
           
-          # Base64 encoded update-binary (100% No Formatting Errors)
+          # Base64 encoded update-binary
           echo "IyEvc2Jpbi9zaAp1bWFzayAwMjIKT1VURkQ9JDIKWklQRklMRT0kMwpta2RpciAtcCAvZGV2L3RtcApybSAtcmYgL2Rldi90bXAvKgpjZCAvZGV2L3RtcAp1bnppcCAtbyAiJFpJUEZJTEUiID4vZGV2L251bGwgMj4mMQouIC4vdXRpbF9mdW5jdGlvbnMuc2gKaW5zdGFsbF9tb2R1bGUKZXhpdCAw" | base64 -d > META-INF/com/google/android/update-binary
           
           echo "I01BR0lTSwo=" | base64 -d > META-INF/com/google/android/updater-script
@@ -43,10 +43,12 @@ jobs:
           chmod +x util_functions.sh
           chmod +x customize.sh
           
+          # জিপ ফাইলের নাম এবং পাথ নিশ্চিত করা হলো
           zip -r ../Talabat-Bypass-Module.zip module.prop service.sh customize.sh META-INF lib
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Talabat-Anhaf
-          path: Talabat-Anhaf.zip
+          # এখানে জিপের নাম হুবহু মিলিয়ে দেওয়া হয়েছে
+          name: Talabat-Bypass-Module
+          path: Talabat-Bypass-Module.zip
