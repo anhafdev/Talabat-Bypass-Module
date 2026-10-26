@@ -1,6 +1,7 @@
 #pragma once
 #include <jni.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 namespace zygisk {
 
@@ -15,18 +16,21 @@ struct ServerSpecializeArgs {
 };
 
 struct Api {
-    void connectCompanion();
-    void pltHookRegister(const char *lib, const char *symbol, void *newFunc, void **oldFunc);
-    void pltHookCommit();
+    virtual void connectCompanion() = 0;
+    virtual void pltHookRegister(dev_t dev, ino_t inode, const char *symbol, void *newFunc, void **oldFunc) = 0;
+    virtual void pltHookCommit() = 0;
+    virtual void hookJniNativeMethods(JNIEnv *env, const char *className, JNINativeMethod *methods, int numMethods) = 0;
+    virtual ~Api() = default;
 };
 
 class ModuleBase {
 public:
-    virtual void onLoad(Api *api, JNIEnv *env) {}
-    virtual void preAppSpecialize(AppSpecializeArgs *args) {}
-    virtual void postAppSpecialize(const AppSpecializeArgs *args) {}
-    virtual void preServerSpecialize(ServerSpecializeArgs *args) {}
-    virtual void postServerSpecialize(const ServerSpecializeArgs *args) {}
+    virtual void onLoad(Api *api, JNIEnv *env) = 0;
+    virtual void preAppSpecialize(AppSpecializeArgs *args) = 0;
+    virtual void postAppSpecialize(const AppSpecializeArgs *args) = 0;
+    virtual void preServerSpecialize(ServerSpecializeArgs *args) = 0;
+    virtual void postServerSpecialize(const ServerSpecializeArgs *args) = 0;
+    virtual ~ModuleBase() = default;
 };
 
 } // namespace zygisk
