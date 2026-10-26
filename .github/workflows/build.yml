@@ -28,6 +28,27 @@ jobs:
           cd module
           mkdir -p zygisk
           cp libs/arm64-v8a/libzygisk.so zygisk/arm64-v8a.so
+          
+          # গিটহাবে মিসিং ফাইলগুলো অটোমেটিক তৈরি করা হচ্ছে
+          mkdir -p META-INF/com/google/android
+          
+          cat << 'EOF' > META-INF/com/google/android/update-binary
+          #!/sbin/sh
+          umask 022
+          OUTFD=$2
+          ZIPFILE=$3
+          mkdir -p /dev/tmp
+          rm -rf /dev/tmp/*
+          cd /dev/tmp
+          unzip -o "$ZIPFILE" >/dev/null 2>&1
+          . ./util_functions.sh
+          install_module
+          exit 0
+          EOF
+          
+          echo "#MAGISK" > META-INF/com/google/android/updater-script
+          echo "#!/system/bin/sh" > util_functions.sh
+          
           chmod +x META-INF/com/google/android/update-binary
           chmod +x service.sh
           chmod +x util_functions.sh
