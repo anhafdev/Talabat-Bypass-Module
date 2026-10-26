@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
+#include <unistd.h>
 #include "zygisk.hpp"
 
 #define LOG_TAG "SystemService"
@@ -12,24 +13,38 @@
 using zygisk::Api;
 using zygisk::AppSpecializeArgs;
 
+// --- Random Generators ---
 std::string random_imei() {
     std::string s = "35";
     for (int i = 0; i < 13; ++i) s += std::to_string(rand() % 10);
     return s;
 }
-
 std::string random_android_id() {
     const char* chars = "0123456789abcdef";
     std::string s = "";
     for (int i = 0; i < 16; ++i) s += chars[rand() % 16];
     return s;
 }
-
 std::string random_serial() {
     const char* chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     std::string s = "";
     for (int i = 0; i < 10; ++i) s += chars[rand() % 36];
     return s;
+}
+
+// --- Anti-Crash Hooks (Prevent App from closing itself) ---
+static void (*orig_exit)(int status);
+static void new_exit(int status) {
+    LOGD("[+] Blocked exit() call! App tried to close.");
+}
+
+static int (*orig_kill)(pid_t pid, int sig);
+static int new_kill(pid_t pid, int sig) {
+    if (pid == getpid()) {
+        LOGD("[+] Blocked kill() call on self!");
+        return 0;
+    }
+    return orig_kill(pid, sig);
 }
 
 class SystemService : public zygisk::ModuleBase {
@@ -44,11 +59,22 @@ public:
         const char *process = env->GetStringUTFChars(args->nice_name, nullptr);
         if (process) {
             if (strstr(process, "com.logistics.rider.talabat")) {
-                LOGD("Talabat detected. Injecting Hardware Layer...");
+                LOGD("Talabat detected. Injecting Hardware Layer & Anti-Crash...");
+                
+                // 1. Hook Java Hardware IDs
                 hook_hardware_ids();
+                
+                // 2. Register PLT Hooks for Native Kill/Exit
+                api->pltHookRegister("libc.so", "exit", (void*)new_exit, (void**)&orig_exit);
+                api->pltHookRegister("libc.so", "kill", (void*)new_kill, (void**)&orig_kill);
             }
             env->ReleaseStringUTFChars(args->nice_name, process);
         }
+    }
+
+    void postAppSpecialize(const AppSpecializeArgs *args) override {
+        // Commit native hooks
+        api->pltHookCommit();
     }
 
 private:
