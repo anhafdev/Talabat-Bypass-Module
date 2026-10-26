@@ -38,18 +38,32 @@ public:
         }
     }
 
-    void postAppSpecialize(const AppSpecializeArgs *args) override {}
-
 private:
     Api *api;
     JNIEnv *env;
 
     void hook_hardware_ids() {
-        // SystemProperties.get হলো একটি নেটিভ মেথড, যা হুক করা ১০০% সেফ
-        JNINativeMethod propMethods[] = {
-            {(char*)"get", (char*)"(Ljava/lang/String;)Ljava/lang/String;", (void*)new_getProp}
-        };
-        api->hookJniNativeMethods(env, "android/os/SystemProperties", propMethods, 1);
+        // 1. Build.getSerial (Native Method)
+        jclass buildClass = env->FindClass("android/os/Build");
+        if (buildClass) {
+            JNINativeMethod buildMethods[] = {
+                {(char*)"getSerial", (char*)"()Ljava/lang/String;", (void*)new_getSerial}
+            };
+            env->RegisterNatives(buildClass, buildMethods, 1);
+        }
+
+        // 2. SystemProperties.get (Native Method)
+        jclass propClass = env->FindClass("android/os/SystemProperties");
+        if (propClass) {
+            JNINativeMethod propMethods[] = {
+                {(char*)"get", (char*)"(Ljava/lang/String;)Ljava/lang/String;", (void*)new_getProp}
+            };
+            env->RegisterNatives(propClass, propMethods, 1);
+        }
+    }
+
+    static jstring new_getSerial(JNIEnv *env, jclass clazz) {
+        return env->NewStringUTF(random_serial().c_str());
     }
 
     static jstring new_getProp(JNIEnv *env, jclass clazz, jstring key) {
@@ -68,7 +82,7 @@ private:
             result = "release-keys";
         } else {
             env->ReleaseStringUTFChars(key, keyStr);
-            return nullptr; // ডিফল্ট আচরণের জন্য
+            return nullptr; 
         }
         
         env->ReleaseStringUTFChars(key, keyStr);
