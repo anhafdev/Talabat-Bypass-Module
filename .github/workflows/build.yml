@@ -29,49 +29,27 @@ jobs:
           mkdir -p zygisk
           cp libs/arm64-v8a/libzygisk.so zygisk/arm64-v8a.so
           
-          # 1. META-INF ফোল্ডার তৈরি
+          # META-INF ফোল্ডার তৈরি
           mkdir -p META-INF/com/google/android
           
-          # 2. update-binary ফাইল তৈরি (echo ব্যবহার করে, যাতে কোনো এরর না হয়)
-          echo '#!/sbin/sh' > META-INF/com/google/android/update-binary
-          echo 'umask 022' >> META-INF/com/google/android/update-binary
-          echo 'OUTFD=$2' >> META-INF/com/google/android/update-binary
-          echo 'ZIPFILE=$3' >> META-INF/com/google/android/update-binary
-          echo 'mkdir -p /dev/tmp' >> META-INF/com/google/android/update-binary
-          echo 'rm -rf /dev/tmp/*' >> META-INF/com/google/android/update-binary
-          echo 'cd /dev/tmp' >> META-INF/com/google/android/update-binary
-          echo 'unzip -o "$ZIPFILE" >/dev/null 2>&1' >> META-INF/com/google/android/update-binary
-          echo '. ./util_functions.sh' >> META-INF/com/google/android/update-binary
-          echo 'install_module' >> META-INF/com/google/android/update-binary
-          echo 'exit 0' >> META-INF/com/google/android/update-binary
+          # Base64 এনকোডেড update-binary (১০০% নিশ্চিত কোনো স্পেস ঢুকবে না)
+          echo "IyEvc2Jpbi9zaAp1bWFzayAwMjIKT1VURkQ9JDIKWklQRklMRT0kMwpta2RpciAtcCAvZGV2L3RtcApybSAtcmYgL2Rldi90bXAvKgpjZCAvZGV2L3RtcAp1bnppcCAtbyAiJFpJUEZJTEUiID4vZGV2L251bGwgMj4mMQouIC4vdXRpbF9mdW5jdGlvbnMuc2gKaW5zdGFsbF9tb2R1bGUKZXhpdCAw" | base64 -d > META-INF/com/google/android/update-binary
           
-          echo "#MAGISK" > META-INF/com/google/android/updater-script
+          # updater-script তৈরি
+          echo "I01BR0lTSwo=" | base64 -d > META-INF/com/google/android/updater-script
           
-          # 3. util_functions.sh তৈরি (যাতে update-binary কাজ করতে পারে)
-          echo '#!/system/bin/sh' > util_functions.sh
-          echo 'install_module() {' >> util_functions.sh
-          echo '  MODID=$(grep_prop id "$TMPDIR/module.prop")' >> util_functions.sh
-          echo '  MODPATH="$NVBASE/modules/$MODID"' >> util_functions.sh
-          echo '  if [ -d "$MODPATH" ]; then touch "$MODPATH/update"; else mkdir -p "$MODPATH"; fi' >> util_functions.sh
-          echo '  cp -af "$TMPDIR"/* "$MODPATH"' >> util_functions.sh
-          echo '  rm -rf "$MODPATH/META-INF" "$MODPATH/util_functions.sh" "$MODPATH/update-binary" "$MODPATH/updater-script"' >> util_functions.sh
-          echo '  ui_print "- Module Installed Successfully!"' >> util_functions.sh
-          echo '}' >> util_functions.sh
-          echo 'grep_prop() {' >> util_functions.sh
-          echo '  REGEX="s/^$1=//p"' >> util_functions.sh
-          echo '  shift' >> util_functions.sh
-          echo '  FILES=$@' >> util_functions.sh
-          echo '  [ -z "$FILES" ] && FILES="/system/build.prop"' >> util_functions.sh
-          echo '  sed -n "$REGEX" $FILES 2>/dev/null | head -n 1' >> util_functions.sh
-          echo '}' >> util_functions.sh
+          # Base64 এনকোডেড util_functions.sh
+          echo "IyEvc3lzdGVtL2Jpbi9zaAppbnN0YWxsX21vZHVsZSgpIHsKICBNT0RJRD0kKGdyZXBfcHJvcCBpZCAiJFRNUERJUi9tb2R1bGUucHJvcCIpCiAgTU9EUEFUSD0iJE5WQkFTRS9tb2R1bGVzLyRNT0RJRDgiCiAgaWYgWyAtZCAiJE1PRFBBVEgiIF07IHRoZW4gdG91Y2ggIiRNT0RQQVRIL3VwZGF0ZSI7IGVsc2UgbWtkaXIgLXAgIiRNT0RQQVRIIjsgZmkKICBjcCAtYWYgIiRUTVBESVIiLyogIiRNT0RQQVRIIgogIHJtIC1yZiAiJE1PRFBBVEgvTUVUQS1JTkYiICIkTU9EUEFUSC91dGlsX2Z1bmN0aW9ucy5zaCIgIiRNT0RQQVRIL3VwZGF0ZS1iaW5hcnkiICIkTU9EUEFUSC91cGRhdGVyLXNjcmlwdCIKICB1aV9wcmludCAiLSBNb2R1bGUgSW5zdGFsbGVkIFN1Y2Nlc3NmdWxseSEiCn0KZ3JlcF9wcm9wKCkgewogIFJFR0VYPSJzL14kMT0vL3AiCiAgc2hpZnQKICBGSUxFUz0kQAogIFsgLXogIiRGSUxFUyIgXSAmJiBGSUxFUz0iL3N5c3RlbS9idWlsZC5wcm9wIgogIHNlZCAtbiAiJFJFR0VYIiAkRklMRVMgMj4vZGV2L251bGwgfCBoZWFkIC1uIDEKfQo=" | base64 -d > util_functions.sh
           
-          # 4. পারমিশন সেট করা
           chmod +x META-INF/com/google/android/update-binary
           chmod +x util_functions.sh
           chmod +x service.sh
           
-          # 5. ZIP তৈরি
-          zip -r ../Talabat-Bypass-Module.zip .
+          # নিশ্চিত করা যে সব ফাইল ঠিক আছে
+          ls -la
+          
+          # শুধুমাত্র প্রয়োজনীয় ফাইলগুলো জিপ করা
+          zip -r ../Talabat-Bypass-Module.zip META-INF module.prop service.sh util_functions.sh zygisk
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
