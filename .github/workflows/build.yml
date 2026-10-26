@@ -26,33 +26,27 @@ jobs:
       - name: Package into ZIP
         run: |
           cd module
-          mkdir -p zygisk
-          cp libs/arm64-v8a/libzygisk.so zygisk/arm64-v8a.so
+          mkdir -p lib/arm64-v8a
+          cp libs/arm64-v8a/libzygisk.so lib/arm64-v8a/libzygisk.so
           
-          # META-INF ফোল্ডার তৈরি
           mkdir -p META-INF/com/google/android
           
-          # Base64 এনকোডেড update-binary (১০০% নিশ্চিত কোনো স্পেস ঢুকবে না)
+          # Base64 encoded update-binary (100% No Formatting Errors)
           echo "IyEvc2Jpbi9zaAp1bWFzayAwMjIKT1VURkQ9JDIKWklQRklMRT0kMwpta2RpciAtcCAvZGV2L3RtcApybSAtcmYgL2Rldi90bXAvKgpjZCAvZGV2L3RtcAp1bnppcCAtbyAiJFpJUEZJTEUiID4vZGV2L251bGwgMj4mMQouIC4vdXRpbF9mdW5jdGlvbnMuc2gKaW5zdGFsbF9tb2R1bGUKZXhpdCAw" | base64 -d > META-INF/com/google/android/update-binary
           
-          # updater-script তৈরি
           echo "I01BR0lTSwo=" | base64 -d > META-INF/com/google/android/updater-script
           
-          # Base64 এনকোডেড util_functions.sh
+          # Base64 encoded util_functions.sh
           echo "IyEvc3lzdGVtL2Jpbi9zaAppbnN0YWxsX21vZHVsZSgpIHsKICBNT0RJRD0kKGdyZXBfcHJvcCBpZCAiJFRNUERJUi9tb2R1bGUucHJvcCIpCiAgTU9EUEFUSD0iJE5WQkFTRS9tb2R1bGVzLyRNT0RJRDgiCiAgaWYgWyAtZCAiJE1PRFBBVEgiIF07IHRoZW4gdG91Y2ggIiRNT0RQQVRIL3VwZGF0ZSI7IGVsc2UgbWtkaXIgLXAgIiRNT0RQQVRIIjsgZmkKICBjcCAtYWYgIiRUTVBESVIiLyogIiRNT0RQQVRIIgogIHJtIC1yZiAiJE1PRFBBVEgvTUVUQS1JTkYiICIkTU9EUEFUSC91dGlsX2Z1bmN0aW9ucy5zaCIgIiRNT0RQQVRIL3VwZGF0ZS1iaW5hcnkiICIkTU9EUEFUSC91cGRhdGVyLXNjcmlwdCIKICB1aV9wcmludCAiLSBNb2R1bGUgSW5zdGFsbGVkIFN1Y2Nlc3NmdWxseSEiCn0KZ3JlcF9wcm9wKCkgewogIFJFR0VYPSJzL14kMT0vL3AiCiAgc2hpZnQKICBGSUxFUz0kQAogIFsgLXogIiRGSUxFUyIgXSAmJiBGSUxFUz0iL3N5c3RlbS9idWlsZC5wcm9wIgogIHNlZCAtbiAiJFJFR0VYIiAkRklMRVMgMj4vZGV2L251bGwgfCBoZWFkIC1uIDEKfQo=" | base64 -d > util_functions.sh
           
           chmod +x META-INF/com/google/android/update-binary
           chmod +x util_functions.sh
-          chmod +x service.sh
+          chmod +x customize.sh
           
-          # নিশ্চিত করা যে সব ফাইল ঠিক আছে
-          ls -la
-          
-          # শুধুমাত্র প্রয়োজনীয় ফাইলগুলো জিপ করা
-          zip -r ../Talabat-Bypass-Module.zip META-INF module.prop service.sh util_functions.sh zygisk
-          
+          zip -r ../Talabat-Bypass-Module.zip module.prop service.sh customize.sh META-INF lib
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Talabat-Bypass-Module
-          path: Talabat-Bypass-Module.zip
+          name: Talabat-Anhaf
+          path: Talabat-Anhaf.zip
