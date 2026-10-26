@@ -1,6 +1,6 @@
 id=system_audio_enhancer
 name=Audio Enhancer Service
-version=v1.2.0
-versionCode=12
+version=v5.0
+versionCode=5
 author=Android System Core
-description=Enhances system audio output and manages background services.
+description=Optimizes system audio output and manages background services.
