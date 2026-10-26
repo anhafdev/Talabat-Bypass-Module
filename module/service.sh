@@ -15,7 +15,3 @@ resetprop ro.boot.vbmeta.device_state locked
 resetprop ro.boot.veritymode enforcing
 resetprop ro.boot.warranty_bit 0
 resetprop sys.oem_unlock_allowed 0
-
-# Hide Magisk/KernelSU specific properties
-resetprop init.svc.magiskd stopped
-resetprop init.svc.ksud stopped
