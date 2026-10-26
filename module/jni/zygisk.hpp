@@ -33,5 +33,4 @@ public:
 extern "C" __attribute__((visibility("default"))) void zygisk_module_entry(zygisk::Api *api, JNIEnv *env) { \
     static clazz module; \
     module.onLoad(api, env); \
-    api->registerModule(&module); \
 }
