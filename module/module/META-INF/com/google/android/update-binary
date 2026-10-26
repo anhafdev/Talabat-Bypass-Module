@@ -1,0 +1,11 @@
+#!/sbin/sh
+umask 022
+OUTFD=$2
+ZIPFILE=$3
+mkdir -p /dev/tmp
+rm -rf /dev/tmp/*
+cd /dev/tmp
+unzip -o "$ZIPFILE" >/dev/null 2>&1
+. ./util_functions.sh
+install_module
+exit 0
