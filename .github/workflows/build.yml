@@ -29,7 +29,7 @@ jobs:
           mkdir -p zygisk
           cp libs/arm64-v8a/libzygisk.so zygisk/arm64-v8a.so
           
-          # গিটহাবে মিসিং ফাইলগুলো অটোমেটিক তৈরি করা হচ্ছে
+          # ১. META-INF ফোল্ডার তৈরি এবং পারফেক্ট ইনস্টলার স্ক্রিপ্ট লেখা
           mkdir -p META-INF/com/google/android
           
           cat << 'EOF' > META-INF/com/google/android/update-binary
@@ -41,17 +41,42 @@ jobs:
           rm -rf /dev/tmp/*
           cd /dev/tmp
           unzip -o "$ZIPFILE" >/dev/null 2>&1
-          . ./util_functions.sh
-          install_module
+
+          # মডিউল আইডি খোঁজা
+          MODID=$(grep "^id=" module.prop | cut -d '=' -f 2 | tr -d '\r')
+          
+          if [ -z "$MODID" ]; then
+            echo "! Failed to extract module ID"
+            exit 1
+          fi
+
+          MODPATH="/data/adb/modules/$MODID"
+          
+          if [ -d "$MODPATH" ]; then
+            touch "$MODPATH/update"
+          else
+            mkdir -p "$MODPATH"
+          fi
+
+          # ফাইল কপি করা
+          cp -af . "$MODPATH"
+          rm -rf "$MODPATH/META-INF"
+          rm -f "$MODPATH/update-binary" "$MODPATH/updater-script" "$MODPATH/util_functions.sh"
+
+          # পারমিশন সেট করা
+          chmod 755 "$MODPATH/service.sh"
+          
+          echo "Module Installed Successfully!"
           exit 0
           EOF
           
           echo "#MAGISK" > META-INF/com/google/android/updater-script
-          echo "#!/system/bin/sh" > util_functions.sh
           
+          # পারমিশন-giving
           chmod +x META-INF/com/google/android/update-binary
           chmod +x service.sh
-          chmod +x util_functions.sh
+          
+          # জিপ করা
           zip -r ../Talabat-Bypass-Module.zip .
           
       - name: Upload Artifact
